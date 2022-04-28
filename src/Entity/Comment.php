@@ -27,6 +27,18 @@ class Comment
     #[ORM\Column(type: 'datetime')]
     private $updatedAt;
 
+    #[ORM\ManyToOne(targetEntity: Order::class, inversedBy: 'comments')]
+    private $horder;
+
+    #[ORM\ManyToOne(targetEntity: Menu::class, inversedBy: 'comments')]
+    private $menu;
+
+    #[ORM\ManyToOne(targetEntity: Restaurant::class, inversedBy: 'comments')]
+    private $restaurant;
+
+    #[ORM\ManyToOne(targetEntity: Item::class, inversedBy: 'comments')]
+    private $item;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -76,6 +88,54 @@ class Comment
     public function setUpdatedAt(\DateTimeInterface $updatedAt): self
     {
         $this->updatedAt = $updatedAt;
+
+        return $this;
+    }
+
+    public function getHorder(): ?Order
+    {
+        return $this->horder;
+    }
+
+    public function setHorder(?Order $horder): self
+    {
+        $this->horder = $horder;
+
+        return $this;
+    }
+
+    public function getMenu(): ?Menu
+    {
+        return $this->menu;
+    }
+
+    public function setMenu(?Menu $menu): self
+    {
+        $this->menu = $menu;
+
+        return $this;
+    }
+
+    public function getRestaurant(): ?Restaurant
+    {
+        return $this->restaurant;
+    }
+
+    public function setRestaurant(?Restaurant $restaurant): self
+    {
+        $this->restaurant = $restaurant;
+
+        return $this;
+    }
+
+    public function getItem(): ?Item
+    {
+        return $this->item;
+    }
+
+    public function setItem(?Item $item): self
+    {
+        $this->item = $item;
 
         return $this;
     }

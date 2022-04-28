@@ -27,6 +27,15 @@ class Image
     #[ORM\Column(type: 'datetime')]
     private $updatedAt;
 
+    #[ORM\ManyToOne(targetEntity: Restaurant::class, inversedBy: 'images')]
+    private $restaurant;
+
+    #[ORM\ManyToOne(targetEntity: Menu::class, inversedBy: 'images')]
+    private $menu;
+
+    #[ORM\ManyToOne(targetEntity: Item::class, inversedBy: 'images')]
+    private $item;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -76,6 +85,42 @@ class Image
     public function setUpdatedAt(\DateTimeInterface $updatedAt): self
     {
         $this->updatedAt = $updatedAt;
+
+        return $this;
+    }
+
+    public function getRestaurant(): ?Restaurant
+    {
+        return $this->restaurant;
+    }
+
+    public function setRestaurant(?Restaurant $restaurant): self
+    {
+        $this->restaurant = $restaurant;
+
+        return $this;
+    }
+
+    public function getMenu(): ?Menu
+    {
+        return $this->menu;
+    }
+
+    public function setMenu(?Menu $menu): self
+    {
+        $this->menu = $menu;
+
+        return $this;
+    }
+
+    public function getItem(): ?Item
+    {
+        return $this->item;
+    }
+
+    public function setItem(?Item $item): self
+    {
+        $this->item = $item;
 
         return $this;
     }

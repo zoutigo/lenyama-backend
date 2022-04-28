@@ -3,6 +3,8 @@
 namespace App\Entity;
 
 use App\Repository\UserRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
@@ -41,6 +43,19 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     #[ORM\Column(type: 'datetime')]
     private $updatedAt;
+
+    #[ORM\ManyToMany(targetEntity: Message::class, inversedBy: 'users')]
+    private $messages;
+
+    #[ORM\ManyToMany(targetEntity: Restaurant::class, inversedBy: 'users')]
+    private $restaurants;
+
+ 
+    public function __construct()
+    {
+        $this->messages = new ArrayCollection();
+        $this->restaurants = new ArrayCollection();
+    }
 
     public function getId(): ?int
     {
@@ -180,6 +195,54 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setUpdatedAt(\DateTimeInterface $updatedAt): self
     {
         $this->updatedAt = $updatedAt;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Message>
+     */
+    public function getMessages(): Collection
+    {
+        return $this->messages;
+    }
+
+    public function addMessage(Message $message): self
+    {
+        if (!$this->messages->contains($message)) {
+            $this->messages[] = $message;
+        }
+
+        return $this;
+    }
+
+    public function removeMessage(Message $message): self
+    {
+        $this->messages->removeElement($message);
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Restaurant>
+     */
+    public function getRestaurants(): Collection
+    {
+        return $this->restaurants;
+    }
+
+    public function addRestaurant(Restaurant $restaurant): self
+    {
+        if (!$this->restaurants->contains($restaurant)) {
+            $this->restaurants[] = $restaurant;
+        }
+
+        return $this;
+    }
+
+    public function removeRestaurant(Restaurant $restaurant): self
+    {
+        $this->restaurants->removeElement($restaurant);
 
         return $this;
     }
