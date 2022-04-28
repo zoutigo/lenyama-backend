@@ -4,6 +4,8 @@ namespace App\Entity;
 
 use ApiPlatform\Core\Annotation\ApiResource;
 use App\Repository\OrderRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: OrderRepository::class)]
@@ -42,6 +44,26 @@ class Order
 
     #[ORM\Column(type: 'datetime')]
     private $updatedAt;
+
+    #[ORM\OneToMany(mappedBy: 'horder', targetEntity: OrderItem::class, orphanRemoval: false)]
+    private $orderItems;
+
+    #[ORM\OneToMany(mappedBy: 'horder', targetEntity: OrderMenu::class)]
+    private $orderMenus;
+
+    #[ORM\ManyToOne(targetEntity: Restaurant::class, inversedBy: 'orders')]
+    #[ORM\JoinColumn(nullable: false)]
+    private $restaurant;
+
+    #[ORM\OneToMany(mappedBy: 'horder', targetEntity: Comment::class)]
+    private $comments;
+
+    public function __construct()
+    {
+        $this->orderItems = new ArrayCollection();
+        $this->orderMenus = new ArrayCollection();
+        $this->comments = new ArrayCollection();
+    }
 
     public function getId(): ?int
     {
@@ -152,6 +174,108 @@ class Order
     public function setUpdatedAt(\DateTimeInterface $updatedAt): self
     {
         $this->updatedAt = $updatedAt;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, OrderItem>
+     */
+    public function getOrderItems(): Collection
+    {
+        return $this->orderItems;
+    }
+
+    public function addOrderItem(OrderItem $orderItem): self
+    {
+        if (!$this->orderItems->contains($orderItem)) {
+            $this->orderItems[] = $orderItem;
+            $orderItem->setHorder($this);
+        }
+
+        return $this;
+    }
+
+    public function removeOrderItem(OrderItem $orderItem): self
+    {
+        if ($this->orderItems->removeElement($orderItem)) {
+            // set the owning side to null (unless already changed)
+            if ($orderItem->getHorder() === $this) {
+                $orderItem->setHorder(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, OrderMenu>
+     */
+    public function getOrderMenus(): Collection
+    {
+        return $this->orderMenus;
+    }
+
+    public function addOrderMenu(OrderMenu $orderMenu): self
+    {
+        if (!$this->orderMenus->contains($orderMenu)) {
+            $this->orderMenus[] = $orderMenu;
+            $orderMenu->setHorder($this);
+        }
+
+        return $this;
+    }
+
+    public function removeOrderMenu(OrderMenu $orderMenu): self
+    {
+        if ($this->orderMenus->removeElement($orderMenu)) {
+            // set the owning side to null (unless already changed)
+            if ($orderMenu->getHorder() === $this) {
+                $orderMenu->setHorder(null);
+            }
+        }
+
+        return $this;
+    }
+
+    public function getRestaurant(): ?Restaurant
+    {
+        return $this->restaurant;
+    }
+
+    public function setRestaurant(?Restaurant $restaurant): self
+    {
+        $this->restaurant = $restaurant;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Comment>
+     */
+    public function getComments(): Collection
+    {
+        return $this->comments;
+    }
+
+    public function addComment(Comment $comment): self
+    {
+        if (!$this->comments->contains($comment)) {
+            $this->comments[] = $comment;
+            $comment->setHorder($this);
+        }
+
+        return $this;
+    }
+
+    public function removeComment(Comment $comment): self
+    {
+        if ($this->comments->removeElement($comment)) {
+            // set the owning side to null (unless already changed)
+            if ($comment->getHorder() === $this) {
+                $comment->setHorder(null);
+            }
+        }
 
         return $this;
     }
