@@ -3,24 +3,26 @@
 namespace App\Entity;
 
 use ApiPlatform\Core\Annotation\ApiResource;
+use App\Entity\Traits\DefineId;
+use App\Entity\Traits\Timestamp;
 use App\Repository\KwattaRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
+#[ORM\HasLifecycleCallbacks()]
+#[ORM\Table(name:'kwattas')]
 #[ORM\Entity(repositoryClass: KwattaRepository::class)]
 #[ApiResource]
 class Kwatta
 {
-    #[ORM\Id]
-    #[ORM\GeneratedValue]
-    #[ORM\Column(type: 'integer')]
-    private $id;
+    use DefineId ;
+    use Timestamp ;
 
     #[ORM\Column(type: 'string', length: 255)]
     private $kwt_name;
 
-    #[ORM\Column(type: 'text', nullable: true)]
+    #[ORM\Column(type: 'text')]
     private $kwt_description;
 
     #[ORM\ManyToOne(targetEntity: City::class, inversedBy: 'kwattas')]
@@ -35,10 +37,7 @@ class Kwatta
         $this->addresses = new ArrayCollection();
     }
 
-    public function getId(): ?int
-    {
-        return $this->id;
-    }
+ 
 
     public function getKwtName(): ?string
     {
@@ -57,7 +56,7 @@ class Kwatta
         return $this->kwt_description;
     }
 
-    public function setKwtDescription(?string $kwt_description): self
+    public function setKwtDescription(string $kwt_description): self
     {
         $this->kwt_description = $kwt_description;
 

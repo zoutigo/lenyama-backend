@@ -3,19 +3,21 @@
 namespace App\Entity;
 
 use ApiPlatform\Core\Annotation\ApiResource;
+use App\Entity\Traits\DefineId;
+use App\Entity\Traits\Timestamp;
 use App\Repository\RestaurantRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
+#[ORM\HasLifecycleCallbacks()]
+#[ORM\Table(name:'restaurants')]
 #[ORM\Entity(repositoryClass: RestaurantRepository::class)]
 #[ApiResource]
 class Restaurant
 {
-    #[ORM\Id]
-    #[ORM\GeneratedValue]
-    #[ORM\Column(type: 'integer')]
-    private $id;
+    use DefineId ;
+    use Timestamp ;
 
     #[ORM\Column(type: 'string', length: 255)]
     private $rst_name;
@@ -23,27 +25,25 @@ class Restaurant
     #[ORM\Column(type: 'text')]
     private $rst_description;
 
-    #[ORM\Column(type: 'datetime')]
-    private $createdAt;
+    #[ORM\ManyToMany(targetEntity: User::class, mappedBy: 'favorite_restaurants')]
+    private $favorite_users;
 
-    #[ORM\Column(type: 'datetime')]
-    private $updatedAt;
-
-    #[ORM\ManyToMany(targetEntity: User::class, mappedBy: 'restaurants')]
-    private $users;
-
-    #[ORM\OneToMany(mappedBy: 'restaurant', targetEntity: Order::class)]
-    private $orders;
-
-    #[ORM\ManyToMany(targetEntity: FoodCategory::class, inversedBy: 'restaurants')]
-    private $foodCatgories;
-
-    #[ORM\OneToMany(mappedBy: 'restaurant', targetEntity: Menu::class)]
-    private $menus;
+    #[ORM\ManyToMany(targetEntity: User::class, inversedBy: 'employers')]
+    private $employees;
 
     #[ORM\ManyToOne(targetEntity: Address::class, inversedBy: 'restaurants')]
     #[ORM\JoinColumn(nullable: false)]
     private $address;
+
+    #[ORM\ManyToOne(targetEntity: FoodCategory::class, inversedBy: 'restaurants')]
+    #[ORM\JoinColumn(nullable: false)]
+    private $food_category;
+
+    #[ORM\OneToMany(mappedBy: 'restaurant', targetEntity: Menu::class)]
+    private $menus;
+
+    #[ORM\OneToMany(mappedBy: 'restaurant', targetEntity: PurchaseOrder::class)]
+    private $purchase_orders;
 
     #[ORM\OneToMany(mappedBy: 'restaurant', targetEntity: Comment::class)]
     private $comments;
@@ -51,20 +51,21 @@ class Restaurant
     #[ORM\OneToMany(mappedBy: 'restaurant', targetEntity: Image::class)]
     private $images;
 
+    #[ORM\OneToMany(mappedBy: 'restaurant', targetEntity: Item::class)]
+    private $items;
+
     public function __construct()
     {
-        $this->users = new ArrayCollection();
-        $this->orders = new ArrayCollection();
-        $this->foodCatgories = new ArrayCollection();
+        $this->favorite_users = new ArrayCollection();
+        $this->employees = new ArrayCollection();
         $this->menus = new ArrayCollection();
+        $this->purchase_orders = new ArrayCollection();
         $this->comments = new ArrayCollection();
         $this->images = new ArrayCollection();
+        $this->items = new ArrayCollection();
     }
 
-    public function getId(): ?int
-    {
-        return $this->id;
-    }
+  
 
     public function getRstName(): ?string
     {
@@ -90,26 +91,29 @@ class Restaurant
         return $this;
     }
 
-    public function getCreatedAt(): ?\DateTimeInterface
+    /**
+     * @return Collection<int, User>
+     */
+    public function getFavoriteUsers(): Collection
     {
-        return $this->createdAt;
+        return $this->favorite_users;
     }
 
-    public function setCreatedAt(\DateTimeInterface $createdAt): self
+    public function addFavoriteUser(User $favoriteUser): self
     {
-        $this->createdAt = $createdAt;
+        if (!$this->favorite_users->contains($favoriteUser)) {
+            $this->favorite_users[] = $favoriteUser;
+            $favoriteUser->addFavoriteRestaurant($this);
+        }
 
         return $this;
     }
 
-    public function getUpdatedAt(): ?\DateTimeInterface
+    public function removeFavoriteUser(User $favoriteUser): self
     {
-        return $this->updatedAt;
-    }
-
-    public function setUpdatedAt(\DateTimeInterface $updatedAt): self
-    {
-        $this->updatedAt = $updatedAt;
+        if ($this->favorite_users->removeElement($favoriteUser)) {
+            $favoriteUser->removeFavoriteRestaurant($this);
+        }
 
         return $this;
     }
@@ -117,80 +121,47 @@ class Restaurant
     /**
      * @return Collection<int, User>
      */
-    public function getUsers(): Collection
+    public function getEmployees(): Collection
     {
-        return $this->users;
+        return $this->employees;
     }
 
-    public function addUser(User $user): self
+    public function addEmployee(User $employee): self
     {
-        if (!$this->users->contains($user)) {
-            $this->users[] = $user;
-            $user->addRestaurant($this);
+        if (!$this->employees->contains($employee)) {
+            $this->employees[] = $employee;
         }
 
         return $this;
     }
 
-    public function removeUser(User $user): self
+    public function removeEmployee(User $employee): self
     {
-        if ($this->users->removeElement($user)) {
-            $user->removeRestaurant($this);
-        }
+        $this->employees->removeElement($employee);
 
         return $this;
     }
 
-    /**
-     * @return Collection<int, Order>
-     */
-    public function getOrders(): Collection
+    public function getAddress(): ?Address
     {
-        return $this->orders;
+        return $this->address;
     }
 
-    public function addOrder(Order $order): self
+    public function setAddress(?Address $address): self
     {
-        if (!$this->orders->contains($order)) {
-            $this->orders[] = $order;
-            $order->setRestaurant($this);
-        }
+        $this->address = $address;
 
         return $this;
     }
 
-    public function removeOrder(Order $order): self
+    public function getFoodCategory(): ?FoodCategory
     {
-        if ($this->orders->removeElement($order)) {
-            // set the owning side to null (unless already changed)
-            if ($order->getRestaurant() === $this) {
-                $order->setRestaurant(null);
-            }
-        }
-
-        return $this;
+        return $this->food_category;
     }
 
-    /**
-     * @return Collection<int, FoodCategory>
-     */
-    public function getFoodCatgories(): Collection
+    public function setFoodCategory(?FoodCategory $food_category): self
     {
-        return $this->foodCatgories;
-    }
-
-    public function addFoodCatgory(FoodCategory $foodCatgory): self
-    {
-        if (!$this->foodCatgories->contains($foodCatgory)) {
-            $this->foodCatgories[] = $foodCatgory;
-        }
-
-        return $this;
-    }
-
-    public function removeFoodCatgory(FoodCategory $foodCatgory): self
-    {
-        $this->foodCatgories->removeElement($foodCatgory);
+        $this->food_category = $food_category;
 
         return $this;
     }
@@ -225,14 +196,32 @@ class Restaurant
         return $this;
     }
 
-    public function getAddress(): ?Address
+    /**
+     * @return Collection<int, PurchaseOrder>
+     */
+    public function getPurchaseOrders(): Collection
     {
-        return $this->address;
+        return $this->purchase_orders;
     }
 
-    public function setAddress(?Address $address): self
+    public function addPurchaseOrder(PurchaseOrder $purchaseOrder): self
     {
-        $this->address = $address;
+        if (!$this->purchase_orders->contains($purchaseOrder)) {
+            $this->purchase_orders[] = $purchaseOrder;
+            $purchaseOrder->setRestaurant($this);
+        }
+
+        return $this;
+    }
+
+    public function removePurchaseOrder(PurchaseOrder $purchaseOrder): self
+    {
+        if ($this->purchase_orders->removeElement($purchaseOrder)) {
+            // set the owning side to null (unless already changed)
+            if ($purchaseOrder->getRestaurant() === $this) {
+                $purchaseOrder->setRestaurant(null);
+            }
+        }
 
         return $this;
     }
@@ -291,6 +280,36 @@ class Restaurant
             // set the owning side to null (unless already changed)
             if ($image->getRestaurant() === $this) {
                 $image->setRestaurant(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Item>
+     */
+    public function getItems(): Collection
+    {
+        return $this->items;
+    }
+
+    public function addItem(Item $item): self
+    {
+        if (!$this->items->contains($item)) {
+            $this->items[] = $item;
+            $item->setRestaurant($this);
+        }
+
+        return $this;
+    }
+
+    public function removeItem(Item $item): self
+    {
+        if ($this->items->removeElement($item)) {
+            // set the owning side to null (unless already changed)
+            if ($item->getRestaurant() === $this) {
+                $item->setRestaurant(null);
             }
         }
 

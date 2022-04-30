@@ -3,29 +3,25 @@
 namespace App\Entity;
 
 use ApiPlatform\Core\Annotation\ApiResource;
+use App\Entity\Traits\DefineId;
+use App\Entity\Traits\Timestamp;
 use App\Repository\ImageRepository;
 use Doctrine\ORM\Mapping as ORM;
 
+#[ORM\HasLifecycleCallbacks()]
+#[ORM\Table(name:'images')]
 #[ORM\Entity(repositoryClass: ImageRepository::class)]
 #[ApiResource]
 class Image
 {
-    #[ORM\Id]
-    #[ORM\GeneratedValue]
-    #[ORM\Column(type: 'integer')]
-    private $id;
+    use DefineId ;
+    use Timestamp ;
 
     #[ORM\Column(type: 'string', length: 255)]
     private $img_name;
 
     #[ORM\Column(type: 'string', length: 255)]
     private $img_path;
-
-    #[ORM\Column(type: 'datetime')]
-    private $createdAt;
-
-    #[ORM\Column(type: 'datetime')]
-    private $updatedAt;
 
     #[ORM\ManyToOne(targetEntity: Restaurant::class, inversedBy: 'images')]
     private $restaurant;
@@ -36,10 +32,9 @@ class Image
     #[ORM\ManyToOne(targetEntity: Item::class, inversedBy: 'images')]
     private $item;
 
-    public function getId(): ?int
-    {
-        return $this->id;
-    }
+    #[ORM\ManyToOne(targetEntity: FoodCategory::class, inversedBy: 'images')]
+    private $food_category;
+
 
     public function getImgName(): ?string
     {
@@ -61,30 +56,6 @@ class Image
     public function setImgPath(string $img_path): self
     {
         $this->img_path = $img_path;
-
-        return $this;
-    }
-
-    public function getCreatedAt(): ?\DateTimeInterface
-    {
-        return $this->createdAt;
-    }
-
-    public function setCreatedAt(\DateTimeInterface $createdAt): self
-    {
-        $this->createdAt = $createdAt;
-
-        return $this;
-    }
-
-    public function getUpdatedAt(): ?\DateTimeInterface
-    {
-        return $this->updatedAt;
-    }
-
-    public function setUpdatedAt(\DateTimeInterface $updatedAt): self
-    {
-        $this->updatedAt = $updatedAt;
 
         return $this;
     }
@@ -121,6 +92,18 @@ class Image
     public function setItem(?Item $item): self
     {
         $this->item = $item;
+
+        return $this;
+    }
+
+    public function getFoodCategory(): ?FoodCategory
+    {
+        return $this->food_category;
+    }
+
+    public function setFoodCategory(?FoodCategory $food_category): self
+    {
+        $this->food_category = $food_category;
 
         return $this;
     }

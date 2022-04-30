@@ -3,19 +3,21 @@
 namespace App\Entity;
 
 use ApiPlatform\Core\Annotation\ApiResource;
+use App\Entity\Traits\DefineId;
+use App\Entity\Traits\Timestamp;
 use App\Repository\MenuRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
+#[ORM\HasLifecycleCallbacks()]
+#[ORM\Table(name:'menus')]
 #[ORM\Entity(repositoryClass: MenuRepository::class)]
 #[ApiResource]
 class Menu
 {
-    #[ORM\Id]
-    #[ORM\GeneratedValue]
-    #[ORM\Column(type: 'integer')]
-    private $id;
+    use DefineId ;
+    use Timestamp ;
 
     #[ORM\Column(type: 'string', length: 255)]
     private $mnu_name;
@@ -26,21 +28,15 @@ class Menu
     #[ORM\Column(type: 'float')]
     private $mnu_price;
 
-    #[ORM\Column(type: 'datetime')]
-    private $createdAt;
-
-    #[ORM\Column(type: 'datetime')]
-    private $updatedAt;
-
-    #[ORM\OneToMany(mappedBy: 'menu', targetEntity: OrderMenu::class)]
-    private $orderMenus;
-
-    #[ORM\OneToMany(mappedBy: 'menu', targetEntity: MenuItem::class)]
-    private $menuItems;
+    #[ORM\OneToMany(mappedBy: 'menu', targetEntity: PurchaseOrderMenu::class)]
+    private $purchaseOrderMenus;
 
     #[ORM\ManyToOne(targetEntity: Restaurant::class, inversedBy: 'menus')]
     #[ORM\JoinColumn(nullable: false)]
     private $restaurant;
+
+    #[ORM\OneToMany(mappedBy: 'menu', targetEntity: MenuItem::class)]
+    private $menuItems;
 
     #[ORM\OneToMany(mappedBy: 'menu', targetEntity: Comment::class)]
     private $comments;
@@ -48,20 +44,14 @@ class Menu
     #[ORM\OneToMany(mappedBy: 'menu', targetEntity: Image::class)]
     private $images;
 
-  
     public function __construct()
     {
-        $this->items = new ArrayCollection();
-        $this->orderMenus = new ArrayCollection();
+        $this->purchaseOrderMenus = new ArrayCollection();
         $this->menuItems = new ArrayCollection();
         $this->comments = new ArrayCollection();
         $this->images = new ArrayCollection();
     }
 
-    public function getId(): ?int
-    {
-        return $this->id;
-    }
 
     public function getMnuName(): ?string
     {
@@ -99,56 +89,44 @@ class Menu
         return $this;
     }
 
-    public function getCreatedAt(): ?\DateTimeInterface
-    {
-        return $this->createdAt;
-    }
-
-    public function setCreatedAt(\DateTimeInterface $createdAt): self
-    {
-        $this->createdAt = $createdAt;
-
-        return $this;
-    }
-
-    public function getUpdatedAt(): ?\DateTimeInterface
-    {
-        return $this->updatedAt;
-    }
-
-    public function setUpdatedAt(\DateTimeInterface $updatedAt): self
-    {
-        $this->updatedAt = $updatedAt;
-
-        return $this;
-    }
-
     /**
-     * @return Collection<int, OrderMenu>
+     * @return Collection<int, PurchaseOrderMenu>
      */
-    public function getOrderMenus(): Collection
+    public function getPurchaseOrderMenus(): Collection
     {
-        return $this->orderMenus;
+        return $this->purchaseOrderMenus;
     }
 
-    public function addOrderMenu(OrderMenu $orderMenu): self
+    public function addPurchaseOrderMenu(PurchaseOrderMenu $purchaseOrderMenu): self
     {
-        if (!$this->orderMenus->contains($orderMenu)) {
-            $this->orderMenus[] = $orderMenu;
-            $orderMenu->setMenu($this);
+        if (!$this->purchaseOrderMenus->contains($purchaseOrderMenu)) {
+            $this->purchaseOrderMenus[] = $purchaseOrderMenu;
+            $purchaseOrderMenu->setMenu($this);
         }
 
         return $this;
     }
 
-    public function removeOrderMenu(OrderMenu $orderMenu): self
+    public function removePurchaseOrderMenu(PurchaseOrderMenu $purchaseOrderMenu): self
     {
-        if ($this->orderMenus->removeElement($orderMenu)) {
+        if ($this->purchaseOrderMenus->removeElement($purchaseOrderMenu)) {
             // set the owning side to null (unless already changed)
-            if ($orderMenu->getMenu() === $this) {
-                $orderMenu->setMenu(null);
+            if ($purchaseOrderMenu->getMenu() === $this) {
+                $purchaseOrderMenu->setMenu(null);
             }
         }
+
+        return $this;
+    }
+
+    public function getRestaurant(): ?Restaurant
+    {
+        return $this->restaurant;
+    }
+
+    public function setRestaurant(?Restaurant $restaurant): self
+    {
+        $this->restaurant = $restaurant;
 
         return $this;
     }
@@ -179,18 +157,6 @@ class Menu
                 $menuItem->setMenu(null);
             }
         }
-
-        return $this;
-    }
-
-    public function getRestaurant(): ?Restaurant
-    {
-        return $this->restaurant;
-    }
-
-    public function setRestaurant(?Restaurant $restaurant): self
-    {
-        $this->restaurant = $restaurant;
 
         return $this;
     }

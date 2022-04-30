@@ -3,31 +3,27 @@
 namespace App\Entity;
 
 use ApiPlatform\Core\Annotation\ApiResource;
+use App\Entity\Traits\DefineId;
+use App\Entity\Traits\Timestamp;
 use App\Repository\CityRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
+#[ORM\HasLifecycleCallbacks()]
+#[ORM\Table(name:'cities')]
 #[ORM\Entity(repositoryClass: CityRepository::class)]
 #[ApiResource]
 class City
 {
-    #[ORM\Id]
-    #[ORM\GeneratedValue]
-    #[ORM\Column(type: 'integer')]
-    private $id;
+    use DefineId ;
+    use Timestamp ;
 
     #[ORM\Column(type: 'string', length: 255)]
     private $cty_name;
 
     #[ORM\Column(type: 'text', nullable: true)]
     private $cty_description;
-
-    #[ORM\Column(type: 'datetime')]
-    private $updatedAt;
-
-    #[ORM\Column(type: 'datetime')]
-    private $createdAt;
 
     #[ORM\OneToMany(mappedBy: 'city', targetEntity: Kwatta::class)]
     private $kwattas;
@@ -37,10 +33,7 @@ class City
         $this->kwattas = new ArrayCollection();
     }
 
-    public function getId(): ?int
-    {
-        return $this->id;
-    }
+
 
     public function getCtyName(): ?string
     {
@@ -62,30 +55,6 @@ class City
     public function setCtyDescription(?string $cty_description): self
     {
         $this->cty_description = $cty_description;
-
-        return $this;
-    }
-
-    public function getUpdatedAt(): ?\DateTimeInterface
-    {
-        return $this->updatedAt;
-    }
-
-    public function setUpdatedAt(\DateTimeInterface $updatedAt): self
-    {
-        $this->updatedAt = $updatedAt;
-
-        return $this;
-    }
-
-    public function getCreatedAt(): ?\DateTimeInterface
-    {
-        return $this->createdAt;
-    }
-
-    public function setCreatedAt(\DateTimeInterface $createdAt): self
-    {
-        $this->createdAt = $createdAt;
 
         return $this;
     }

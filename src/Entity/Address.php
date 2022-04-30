@@ -3,24 +3,26 @@
 namespace App\Entity;
 
 use ApiPlatform\Core\Annotation\ApiResource;
+use App\Entity\Traits\DefineId;
+use App\Entity\Traits\Timestamp;
 use App\Repository\AddressRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
+#[ORM\HasLifecycleCallbacks()]
+#[ORM\Table(name:'addresses')]
 #[ORM\Entity(repositoryClass: AddressRepository::class)]
 #[ApiResource]
 class Address
 {
-    #[ORM\Id]
-    #[ORM\GeneratedValue]
-    #[ORM\Column(type: 'integer')]
-    private $id;
+    use DefineId ;
+    use Timestamp ;
 
     #[ORM\Column(type: 'string', length: 255, nullable: true)]
     private $adr_street;
 
-    #[ORM\Column(type: 'text', nullable: true)]
+    #[ORM\Column(type: 'string', length: 255, nullable: true)]
     private $adr_description;
 
     #[ORM\Column(type: 'string', length: 255)]
@@ -28,12 +30,6 @@ class Address
 
     #[ORM\Column(type: 'string', length: 255)]
     private $adr_lat;
-
-    #[ORM\Column(type: 'datetime')]
-    private $createdAt;
-
-    #[ORM\Column(type: 'datetime')]
-    private $updatedAt;
 
     #[ORM\OneToMany(mappedBy: 'address', targetEntity: Restaurant::class)]
     private $restaurants;
@@ -47,10 +43,7 @@ class Address
         $this->restaurants = new ArrayCollection();
     }
 
-    public function getId(): ?int
-    {
-        return $this->id;
-    }
+ 
 
     public function getAdrStreet(): ?string
     {
@@ -96,30 +89,6 @@ class Address
     public function setAdrLat(string $adr_lat): self
     {
         $this->adr_lat = $adr_lat;
-
-        return $this;
-    }
-
-    public function getCreatedAt(): ?\DateTimeInterface
-    {
-        return $this->createdAt;
-    }
-
-    public function setCreatedAt(\DateTimeInterface $createdAt): self
-    {
-        $this->createdAt = $createdAt;
-
-        return $this;
-    }
-
-    public function getUpdatedAt(): ?\DateTimeInterface
-    {
-        return $this->updatedAt;
-    }
-
-    public function setUpdatedAt(\DateTimeInterface $updatedAt): self
-    {
-        $this->updatedAt = $updatedAt;
 
         return $this;
     }

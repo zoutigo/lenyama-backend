@@ -3,20 +3,22 @@
 namespace App\Entity;
 
 use ApiPlatform\Core\Annotation\ApiResource;
+use App\Entity\Traits\DefineId;
+use App\Entity\Traits\Timestamp;
 use App\Repository\MenuItemRepository;
 use Doctrine\ORM\Mapping as ORM;
 
+#[ORM\HasLifecycleCallbacks()]
+#[ORM\Table(name:'menu_items')]
 #[ORM\Entity(repositoryClass: MenuItemRepository::class)]
 #[ApiResource]
 class MenuItem
 {
-    #[ORM\Id]
-    #[ORM\GeneratedValue]
-    #[ORM\Column(type: 'integer')]
-    private $id;
+    use DefineId ;
+    use Timestamp ;
 
     #[ORM\Column(type: 'integer')]
-    private $mnu_item_quantity;
+    private $mnu_itm_quantity;
 
     #[ORM\ManyToOne(targetEntity: Item::class, inversedBy: 'menuItems')]
     #[ORM\JoinColumn(nullable: false)]
@@ -26,19 +28,16 @@ class MenuItem
     #[ORM\JoinColumn(nullable: false)]
     private $menu;
 
-    public function getId(): ?int
+   
+
+    public function getMnuItmQuantity(): ?int
     {
-        return $this->id;
+        return $this->mnu_itm_quantity;
     }
 
-    public function getMnuItemQuantity(): ?int
+    public function setMnuItmQuantity(int $mnu_itm_quantity): self
     {
-        return $this->mnu_item_quantity;
-    }
-
-    public function setMnuItemQuantity(int $mnu_item_quantity): self
-    {
-        $this->mnu_item_quantity = $mnu_item_quantity;
+        $this->mnu_itm_quantity = $mnu_itm_quantity;
 
         return $this;
     }
