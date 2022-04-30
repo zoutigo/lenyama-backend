@@ -3,32 +3,28 @@
 namespace App\Entity;
 
 use ApiPlatform\Core\Annotation\ApiResource;
+use App\Entity\Traits\DefineId;
+use App\Entity\Traits\Timestamp;
 use App\Repository\CommentRepository;
 use Doctrine\ORM\Mapping as ORM;
 
+#[ORM\HasLifecycleCallbacks()]
+#[ORM\Table(name:'comments')]
 #[ORM\Entity(repositoryClass: CommentRepository::class)]
 #[ApiResource]
 class Comment
 {
-    #[ORM\Id]
-    #[ORM\GeneratedValue]
-    #[ORM\Column(type: 'integer')]
-    private $id;
-
-    #[ORM\Column(type: 'text')]
-    private $cmt_content;
+    use DefineId ;
+    use Timestamp ;
 
     #[ORM\Column(type: 'string', length: 255)]
     private $cmt_title;
 
-    #[ORM\Column(type: 'datetime')]
-    private $createdAt;
+    #[ORM\Column(type: 'text')]
+    private $cmt_content;
 
-    #[ORM\Column(type: 'datetime')]
-    private $updatedAt;
-
-    #[ORM\ManyToOne(targetEntity: Order::class, inversedBy: 'comments')]
-    private $horder;
+    #[ORM\ManyToOne(targetEntity: PurchaseOrder::class, inversedBy: 'comments')]
+    private $purchase_order;
 
     #[ORM\ManyToOne(targetEntity: Menu::class, inversedBy: 'comments')]
     private $menu;
@@ -39,9 +35,20 @@ class Comment
     #[ORM\ManyToOne(targetEntity: Item::class, inversedBy: 'comments')]
     private $item;
 
-    public function getId(): ?int
+
+
+
+
+    public function getCmtTitle(): ?string
     {
-        return $this->id;
+        return $this->cmt_title;
+    }
+
+    public function setCmtTitle(string $cmt_title): self
+    {
+        $this->cmt_title = $cmt_title;
+
+        return $this;
     }
 
     public function getCmtContent(): ?string
@@ -56,50 +63,14 @@ class Comment
         return $this;
     }
 
-    public function getCmtTitle(): ?string
+    public function getPurchaseOrder(): ?PurchaseOrder
     {
-        return $this->cmt_title;
+        return $this->purchase_order;
     }
 
-    public function setCmtTitle(string $cmt_title): self
+    public function setPurchaseOrder(?PurchaseOrder $purchase_order): self
     {
-        $this->cmt_title = $cmt_title;
-
-        return $this;
-    }
-
-    public function getCreatedAt(): ?\DateTimeInterface
-    {
-        return $this->createdAt;
-    }
-
-    public function setCreatedAt(\DateTimeInterface $createdAt): self
-    {
-        $this->createdAt = $createdAt;
-
-        return $this;
-    }
-
-    public function getUpdatedAt(): ?\DateTimeInterface
-    {
-        return $this->updatedAt;
-    }
-
-    public function setUpdatedAt(\DateTimeInterface $updatedAt): self
-    {
-        $this->updatedAt = $updatedAt;
-
-        return $this;
-    }
-
-    public function getHorder(): ?Order
-    {
-        return $this->horder;
-    }
-
-    public function setHorder(?Order $horder): self
-    {
-        $this->horder = $horder;
+        $this->purchase_order = $purchase_order;
 
         return $this;
     }

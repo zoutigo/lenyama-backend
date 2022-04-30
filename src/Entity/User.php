@@ -2,20 +2,22 @@
 
 namespace App\Entity;
 
+use ApiPlatform\Core\Annotation\ApiResource;
+use App\Entity\Traits\DefineId;
+use App\Entity\Traits\Timestamp;
 use App\Repository\UserRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
-use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
-use Symfony\Component\Security\Core\User\UserInterface;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
-class User implements UserInterface, PasswordAuthenticatedUserInterface
+#[ORM\HasLifecycleCallbacks()]
+#[ORM\Table(name:'users')]
+#[ApiResource]
+class User
 {
-    #[ORM\Id]
-    #[ORM\GeneratedValue]
-    #[ORM\Column(type: 'integer')]
-    private $id;
+    use Timestamp ;
+    use DefineId ;
 
     #[ORM\Column(type: 'string', length: 180, unique: true)]
     private $usr_email;
@@ -38,28 +40,24 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(type: 'datetime')]
     private $usr_birthdate;
 
-    #[ORM\Column(type: 'datetime')]
-    private $createdAt;
+    #[ORM\OneToMany(mappedBy: 'user', targetEntity: Note::class)]
+    private $notes;
 
-    #[ORM\Column(type: 'datetime')]
-    private $updatedAt;
+    #[ORM\ManyToMany(targetEntity: Restaurant::class, inversedBy: 'favorite_users')]
+    private $favorite_restaurants;
 
-    #[ORM\ManyToMany(targetEntity: Message::class, inversedBy: 'users')]
-    private $messages;
+    #[ORM\ManyToMany(targetEntity: Restaurant::class, mappedBy: 'employees')]
+    private $employers;
 
-    #[ORM\ManyToMany(targetEntity: Restaurant::class, inversedBy: 'users')]
-    private $restaurants;
+    #[ORM\OneToMany(mappedBy: 'user', targetEntity: PurchaseOrder::class)]
+    private $purchase_orders;
 
- 
     public function __construct()
     {
-        $this->messages = new ArrayCollection();
-        $this->restaurants = new ArrayCollection();
-    }
-
-    public function getId(): ?int
-    {
-        return $this->id;
+        $this->notes = new ArrayCollection();
+        $this->favorite_restaurants = new ArrayCollection();
+        $this->employers = new ArrayCollection();
+        $this->purchase_orders = new ArrayCollection();
     }
 
     public function getUsrEmail(): ?string
@@ -175,50 +173,32 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
-    public function getCreatedAt(): ?\DateTimeInterface
-    {
-        return $this->createdAt;
-    }
-
-    public function setCreatedAt(\DateTimeInterface $createdAt): self
-    {
-        $this->createdAt = $createdAt;
-
-        return $this;
-    }
-
-    public function getUpdatedAt(): ?\DateTimeInterface
-    {
-        return $this->updatedAt;
-    }
-
-    public function setUpdatedAt(\DateTimeInterface $updatedAt): self
-    {
-        $this->updatedAt = $updatedAt;
-
-        return $this;
-    }
-
     /**
-     * @return Collection<int, Message>
+     * @return Collection<int, Note>
      */
-    public function getMessages(): Collection
+    public function getNotes(): Collection
     {
-        return $this->messages;
+        return $this->notes;
     }
 
-    public function addMessage(Message $message): self
+    public function addNote(Note $note): self
     {
-        if (!$this->messages->contains($message)) {
-            $this->messages[] = $message;
+        if (!$this->notes->contains($note)) {
+            $this->notes[] = $note;
+            $note->setUser($this);
         }
 
         return $this;
     }
 
-    public function removeMessage(Message $message): self
+    public function removeNote(Note $note): self
     {
-        $this->messages->removeElement($message);
+        if ($this->notes->removeElement($note)) {
+            // set the owning side to null (unless already changed)
+            if ($note->getUser() === $this) {
+                $note->setUser(null);
+            }
+        }
 
         return $this;
     }
@@ -226,23 +206,80 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     /**
      * @return Collection<int, Restaurant>
      */
-    public function getRestaurants(): Collection
+    public function getFavoriteRestaurants(): Collection
     {
-        return $this->restaurants;
+        return $this->favorite_restaurants;
     }
 
-    public function addRestaurant(Restaurant $restaurant): self
+    public function addFavoriteRestaurant(Restaurant $favoriteRestaurant): self
     {
-        if (!$this->restaurants->contains($restaurant)) {
-            $this->restaurants[] = $restaurant;
+        if (!$this->favorite_restaurants->contains($favoriteRestaurant)) {
+            $this->favorite_restaurants[] = $favoriteRestaurant;
         }
 
         return $this;
     }
 
-    public function removeRestaurant(Restaurant $restaurant): self
+    public function removeFavoriteRestaurant(Restaurant $favoriteRestaurant): self
     {
-        $this->restaurants->removeElement($restaurant);
+        $this->favorite_restaurants->removeElement($favoriteRestaurant);
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Restaurant>
+     */
+    public function getEmployers(): Collection
+    {
+        return $this->employers;
+    }
+
+    public function addEmployer(Restaurant $employer): self
+    {
+        if (!$this->employers->contains($employer)) {
+            $this->employers[] = $employer;
+            $employer->addEmployee($this);
+        }
+
+        return $this;
+    }
+
+    public function removeEmployer(Restaurant $employer): self
+    {
+        if ($this->employers->removeElement($employer)) {
+            $employer->removeEmployee($this);
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, PurchaseOrder>
+     */
+    public function getPurchaseOrders(): Collection
+    {
+        return $this->purchase_orders;
+    }
+
+    public function addPurchaseOrder(PurchaseOrder $purchaseOrder): self
+    {
+        if (!$this->purchase_orders->contains($purchaseOrder)) {
+            $this->purchase_orders[] = $purchaseOrder;
+            $purchaseOrder->setUser($this);
+        }
+
+        return $this;
+    }
+
+    public function removePurchaseOrder(PurchaseOrder $purchaseOrder): self
+    {
+        if ($this->purchase_orders->removeElement($purchaseOrder)) {
+            // set the owning side to null (unless already changed)
+            if ($purchaseOrder->getUser() === $this) {
+                $purchaseOrder->setUser(null);
+            }
+        }
 
         return $this;
     }

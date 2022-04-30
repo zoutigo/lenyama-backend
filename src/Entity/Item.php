@@ -3,37 +3,33 @@
 namespace App\Entity;
 
 use ApiPlatform\Core\Annotation\ApiResource;
+use App\Entity\Traits\DefineId;
+use App\Entity\Traits\Timestamp;
 use App\Repository\ItemRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
+#[ORM\HasLifecycleCallbacks()]
+#[ORM\Table(name:'items')]
 #[ORM\Entity(repositoryClass: ItemRepository::class)]
 #[ApiResource]
 class Item
 {
-    #[ORM\Id]
-    #[ORM\GeneratedValue]
-    #[ORM\Column(type: 'integer')]
-    private $id;
+    use DefineId ;
+    use Timestamp ;
 
     #[ORM\Column(type: 'string', length: 255)]
     private $itm_name;
 
-    #[ORM\Column(type: 'text', nullable: true)]
+    #[ORM\Column(type: 'text')]
     private $itm_description;
 
     #[ORM\Column(type: 'float')]
     private $itm_price;
 
-    #[ORM\Column(type: 'datetime')]
-    private $createdAt;
-
-    #[ORM\Column(type: 'datetime')]
-    private $updatedAt;
-
-    #[ORM\OneToMany(mappedBy: 'item', targetEntity: OrderItem::class)]
-    private $item;
+    #[ORM\OneToMany(mappedBy: 'item', targetEntity: PurchaseOrderItem::class)]
+    private $purchaseOrderItems;
 
     #[ORM\OneToMany(mappedBy: 'item', targetEntity: MenuItem::class)]
     private $menuItems;
@@ -44,19 +40,19 @@ class Item
     #[ORM\OneToMany(mappedBy: 'item', targetEntity: Image::class)]
     private $images;
 
+    #[ORM\ManyToOne(targetEntity: Restaurant::class, inversedBy: 'items')]
+    #[ORM\JoinColumn(nullable: false)]
+    private $restaurant;
+
     public function __construct()
     {
-        $this->menus = new ArrayCollection();
-        $this->item = new ArrayCollection();
+        $this->purchaseOrderItems = new ArrayCollection();
         $this->menuItems = new ArrayCollection();
         $this->comments = new ArrayCollection();
         $this->images = new ArrayCollection();
     }
 
-    public function getId(): ?int
-    {
-        return $this->id;
-    }
+
 
     public function getItmName(): ?string
     {
@@ -75,7 +71,7 @@ class Item
         return $this->itm_description;
     }
 
-    public function setItmDescription(?string $itm_description): self
+    public function setItmDescription(string $itm_description): self
     {
         $this->itm_description = $itm_description;
 
@@ -94,54 +90,30 @@ class Item
         return $this;
     }
 
-    public function getCreatedAt(): ?\DateTimeInterface
-    {
-        return $this->createdAt;
-    }
-
-    public function setCreatedAt(\DateTimeInterface $createdAt): self
-    {
-        $this->createdAt = $createdAt;
-
-        return $this;
-    }
-
-    public function getUpdatedAt(): ?\DateTimeInterface
-    {
-        return $this->updatedAt;
-    }
-
-    public function setUpdatedAt(\DateTimeInterface $updatedAt): self
-    {
-        $this->updatedAt = $updatedAt;
-
-        return $this;
-    }
-
     /**
-     * @return Collection<int, OrderItem>
+     * @return Collection<int, PurchaseOrderItem>
      */
-    public function getItem(): Collection
+    public function getPurchaseOrderItems(): Collection
     {
-        return $this->item;
+        return $this->purchaseOrderItems;
     }
 
-    public function addItem(OrderItem $item): self
+    public function addPurchaseOrderItem(PurchaseOrderItem $purchaseOrderItem): self
     {
-        if (!$this->item->contains($item)) {
-            $this->item[] = $item;
-            $item->setItem($this);
+        if (!$this->purchaseOrderItems->contains($purchaseOrderItem)) {
+            $this->purchaseOrderItems[] = $purchaseOrderItem;
+            $purchaseOrderItem->setItem($this);
         }
 
         return $this;
     }
 
-    public function removeItem(OrderItem $item): self
+    public function removePurchaseOrderItem(PurchaseOrderItem $purchaseOrderItem): self
     {
-        if ($this->item->removeElement($item)) {
+        if ($this->purchaseOrderItems->removeElement($purchaseOrderItem)) {
             // set the owning side to null (unless already changed)
-            if ($item->getItem() === $this) {
-                $item->setItem(null);
+            if ($purchaseOrderItem->getItem() === $this) {
+                $purchaseOrderItem->setItem(null);
             }
         }
 
@@ -234,6 +206,18 @@ class Item
                 $image->setItem(null);
             }
         }
+
+        return $this;
+    }
+
+    public function getRestaurant(): ?Restaurant
+    {
+        return $this->restaurant;
+    }
+
+    public function setRestaurant(?Restaurant $restaurant): self
+    {
+        $this->restaurant = $restaurant;
 
         return $this;
     }

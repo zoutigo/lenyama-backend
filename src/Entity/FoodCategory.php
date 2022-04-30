@@ -3,44 +3,41 @@
 namespace App\Entity;
 
 use ApiPlatform\Core\Annotation\ApiResource;
+use App\Entity\Traits\DefineId;
+use App\Entity\Traits\Timestamp;
 use App\Repository\FoodCategoryRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
+#[ORM\HasLifecycleCallbacks()]
+#[ORM\Table(name:'food_categories')]
 #[ORM\Entity(repositoryClass: FoodCategoryRepository::class)]
 #[ApiResource]
 class FoodCategory
 {
-    #[ORM\Id]
-    #[ORM\GeneratedValue]
-    #[ORM\Column(type: 'integer')]
-    private $id;
+    use DefineId ;
+    use Timestamp ;
 
     #[ORM\Column(type: 'string', length: 255)]
     private $fct_name;
 
-    #[ORM\Column(type: 'text')]
+    #[ORM\Column(type: 'string', length: 255)]
     private $fct_description;
 
-    #[ORM\Column(type: 'datetime')]
-    private $createdAt;
-
-    #[ORM\Column(type: 'datetime')]
-    private $updatedAt;
-
-    #[ORM\ManyToMany(targetEntity: Restaurant::class, mappedBy: 'foodCatgories')]
+    #[ORM\OneToMany(mappedBy: 'food_category', targetEntity: Restaurant::class)]
     private $restaurants;
+
+    #[ORM\OneToMany(mappedBy: 'food_category', targetEntity: Image::class)]
+    private $images;
 
     public function __construct()
     {
         $this->restaurants = new ArrayCollection();
+        $this->images = new ArrayCollection();
     }
 
-    public function getId(): ?int
-    {
-        return $this->id;
-    }
+   
 
     public function getFctName(): ?string
     {
@@ -66,30 +63,6 @@ class FoodCategory
         return $this;
     }
 
-    public function getCreatedAt(): ?\DateTimeInterface
-    {
-        return $this->createdAt;
-    }
-
-    public function setCreatedAt(\DateTimeInterface $createdAt): self
-    {
-        $this->createdAt = $createdAt;
-
-        return $this;
-    }
-
-    public function getUpdatedAt(): ?\DateTimeInterface
-    {
-        return $this->updatedAt;
-    }
-
-    public function setUpdatedAt(\DateTimeInterface $updatedAt): self
-    {
-        $this->updatedAt = $updatedAt;
-
-        return $this;
-    }
-
     /**
      * @return Collection<int, Restaurant>
      */
@@ -102,7 +75,7 @@ class FoodCategory
     {
         if (!$this->restaurants->contains($restaurant)) {
             $this->restaurants[] = $restaurant;
-            $restaurant->addFoodCatgory($this);
+            $restaurant->setFoodCategory($this);
         }
 
         return $this;
@@ -111,7 +84,40 @@ class FoodCategory
     public function removeRestaurant(Restaurant $restaurant): self
     {
         if ($this->restaurants->removeElement($restaurant)) {
-            $restaurant->removeFoodCatgory($this);
+            // set the owning side to null (unless already changed)
+            if ($restaurant->getFoodCategory() === $this) {
+                $restaurant->setFoodCategory(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Image>
+     */
+    public function getImages(): Collection
+    {
+        return $this->images;
+    }
+
+    public function addImage(Image $image): self
+    {
+        if (!$this->images->contains($image)) {
+            $this->images[] = $image;
+            $image->setFoodCategory($this);
+        }
+
+        return $this;
+    }
+
+    public function removeImage(Image $image): self
+    {
+        if ($this->images->removeElement($image)) {
+            // set the owning side to null (unless already changed)
+            if ($image->getFoodCategory() === $this) {
+                $image->setFoodCategory(null);
+            }
         }
 
         return $this;
